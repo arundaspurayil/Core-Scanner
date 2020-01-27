@@ -1,0 +1,20 @@
+PROGRAM
+INT
+ID[X]
+COMMA
+ID[Y]
+COMMA
+ID[XY]
+SEMICOLON
+INPUT
+ID[X]
+SEMICOLON
+ID[case]
+ID[x]
+ID[of]
+CONST[1]
+COMMA
+CONST[2]
+COMMA
+CONST[3]
+ERROR: Missing '=' after ':'!
