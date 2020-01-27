@@ -14,4 +14,4 @@ OUTPUT
 ID[X]
 SEMICOLON
 END
-ERROR: Token nnot apart of Core language!
+ERROR: No text allowed after END keyword!

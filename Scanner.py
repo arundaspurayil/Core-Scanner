@@ -3,68 +3,78 @@ from Core import Core
 class Scanner:
   # Initialize the scanner
   def __init__(self, filename):
+    """
+      I implemented this by reading the entire file and seperating it by each character into a list
+    """
+
+    #self.count represents the index in the array that is currently being looked at
     self.count = 0
+    #self.whiteSpaceCount represents the number of whitespace characters encountered before a token
+
     self.whiteSpaceCount = 0
+    #self.end is True when Core.END is found
     self.end = False
+
+    #Opens the file, reads each character into an array and closes the file
     file = open(filename,"r")
-
     self.tokens = list(file.read())
-    #self.tokens = list(filter(lambda char: char != ' ' and char != '\t' and char != '\n', file.read()))
-
     file.close()
 
   # Advance to the next token
   def nextToken(self):
+    #Move to the next token by ignoring the indices of all the whitespace characters
     self.count += self.whiteSpaceCount
+
     token = self.currentToken()
 
+    #Compare the token returned from currentToken() to all the possible token values to determine how much to increment self.count
+    #For example if the token returned is a + then we can move onto the next token by incrementing self.count by 1
+    #self.count is the index of the start of the current token
+
+    #Essentially since the file is separated into each char, the amount self.count gets incremented by 
+    #corresponds to the number of indices to add before the next character is reached
     if token == Core.ID:
+      #Increment the current index by the length of the ID the user gave
       self.count += len(self.getID())
     elif token == Core.CONST:
+      #Increment the current index by the length of the number the user gave
       self.count += len(self.getCONST())
     elif token == Core.ASSIGN or token == Core.LESSEQUAL or token == Core.IF:
       self.count += 2
-    elif token == Core.LESS or token == Core.SEMICOLON or token == Core.LPAREN or token == Core.RPAREN or token == Core.COMMA:
+    elif token == Core.LESS or token == Core.SUB or token == Core.ADD or token == Core.SEMICOLON or token == Core.LPAREN or token == Core.RPAREN or token == Core.COMMA:
       self.count += 1
     elif token == Core.PROGRAM or token == Core.INT or token == Core.OUTPUT or token == Core.INPUT or token == Core.BEGIN or token==Core.WHILE or token == Core.ENDWHILE or token == Core.ENDFUNC or token == Core.THEN or token == Core.ELSE or token == Core.ENDIF:
       self.count += len(token.name)
     else:
-      self.count += 1
+      if token == Core.END:
+        self.count += 3
+      else:
+        self.count += 1
 
-    
-
-    """
-    if token == Core.PROGRAM or token == Core.INT or token == Core.OUTPUT or token == Core.INPUT or token == Core.BEGIN:
-      self.count += len(token.name)
-    elif token == Core.ID:
-      self.count += len(self.getID())
-    elif token == Core.CONST:
-      self.count += len(self.getCONST())
-    elif token == Core.ASSIGN:
-      self.count +=2
-    else:
-      self.count += 1
-    """
-
-
+  
   def currentToken(self):
-    #if self.end:
-     # return Core.EOS
-    
+
+    #Set whiteSpaceCount to 0 because currentTokens gets called multiple times so I don't want the same value to get added multiple times
     self.whiteSpaceCount=0
+
     currentToken = self.tokens[self.count]
     index = self.count
-    while index<len(self.tokens) and (currentToken == ' ' or currentToken == '\n' or currentToken == '\t'):
+
+    #Loops through all whitespace characters and ignores them
+    while index<len(self.tokens)-1 and (currentToken == ' ' or currentToken == '\n' or currentToken == '\t'):
       self.whiteSpaceCount += 1
       index += 1     
-      currentToken = self.tokens[index]
+    
+    #The first character that is not whitespace
+    currentToken = self.tokens[index]
       
+    #The if else statement below are all the possible 1 character tokens
+    #The corresponing token gets returned
     if currentToken ==  ";":
       return Core.SEMICOLON
     elif currentToken == ",":
       return Core.COMMA
     elif currentToken == "!":
-      #Ask if negation is !
       return Core.NEGATION
     elif currentToken == "=":
       return Core.EQUAL
@@ -79,26 +89,26 @@ class Scanner:
     elif currentToken == ")":
       return Core.RPAREN
     
+    #Checks for the assignment token
     if currentToken == ':':
-      #CHECK FOR INDEX OUT OF BOUNDS
-      if self.tokens[index+1] == "=":
+      #If index is still in bounds and the next character after the : is an = then return the ASSIGN token. Else it is an error.
+      if (index < len(self.tokens)-1) and self.tokens[index+1] == "=":
         return Core.ASSIGN
       else:
         print("ERROR: Missing '=' after ':'!")
         return Core.EOS
 
+    #If the current token is an < then check to see if the next token is an =
     if currentToken == '<':
-      if self.tokens[index+1] == "=":
+      if (index < len(self.tokens)-1) and self.tokens[index+1] == "=":
         return Core.LESSEQUAL
       else:
         return Core.LESS
       
-    
+    currentStr = ""    
     if currentToken.isalpha():
-      currentStr = ""
       while index<len(self.tokens) and self.tokens[index].isalpha():
         currentStr += self.tokens[index]
-        #print(currentStr)
         
         if not (any(x.isupper() for x in currentStr)):
           if (currentStr == "end"):
@@ -152,9 +162,13 @@ class Scanner:
         return Core.EOS
       return Core.CONST
     
-    if self.end != True:
-      print("ERROR: Token not apart of Core language!")
+    if self.end and index != len(self.tokens)-1:
+        print("ERROR: No text allowed after END keyword!")
+    elif not self.end:
+      print("Error: Invalid token!")
+
     return Core.EOS
+    
  
   def getID(self):
     index = self.count + self.whiteSpaceCount
