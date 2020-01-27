@@ -105,32 +105,43 @@ class Scanner:
       else:
         return Core.LESS
       
+    #If the current token is a character in the alphabet then we want to look at the corresponding characters
+    # and determine if it is a token in the core language or an ID
     currentStr = ""    
     if currentToken.isalpha():
+      #While the current index is within bounds and the current token is an alphabetic character
       while index<len(self.tokens) and self.tokens[index].isalpha():
+        #currentStr is the current token + the corresponding characters after it
         currentStr += self.tokens[index]
         
+        #If statement is only true if all characters in currentStr are lowercase
         if not (any(x.isupper() for x in currentStr)):
+          #If currentStr is "end" then we have to check if it is ENDWHILE ENDFUNC or ENDIF
           if (currentStr == "end"):
             isWhile = False
             isFunc = False
             isIf = False
+            #Try catch statement is there to catch index out of bounds error and ignore it
             try:
+              #Check if the next 5 characters are "while"
               if self.tokens[index+1] == 'w':
                 isWhile = self.tokens[index+1] == 'w'
                 isWhile = self.tokens[index+2] == 'h' and isWhile
                 isWhile = self.tokens[index+3] == 'i' and isWhile
                 isWhile = self.tokens[index+4] == 'l' and isWhile
                 isWhile = self.tokens[index+5] == 'e' and isWhile
+              #Check if the next 4 characters are "func"
               elif self.tokens[index+1] == 'f':
                 isFunc = self.tokens[index+1] == 'f' 
                 isFunc = self.tokens[index+2] == 'u' and isFunc
                 isFunc = self.tokens[index+3] == 'n' and isFunc
                 isFunc = self.tokens[index+4] == 'c' and isFunc
+              #Check if it is an ENDIF
               elif self.tokens[index+1] == 'i':
                 isIf = self.tokens[index+1] == 'i' 
                 isIf = self.tokens[index+2] == 'f' and isIf
-
+              
+              #If it is ENDFUNC, ENDWHILE or ENDIF return the corresponding token
               if isWhile:
                 return Core.ENDWHILE
               elif isFunc:
@@ -139,31 +150,51 @@ class Scanner:
                 return Core.ENDIF
             except Exception as e:
               pass
+          
+          """
+            The try catch statement takes each currentStr and determines if it is in the core language
+            Try catch is there because if the currentStr isn't in the Core language then it returns an error
+          """
           try:
+            #Check if token is in the core language
             token = Core[currentStr.upper()]
+            #If the token returned is Core.END then the program is over thus self.end is true and the token gets returned
             if token == Core.END:
               self.end = True
             return token
           except Exception as e:
             pass
 
+        #Look at the next character in the list
         index += 1
+      
+      #At this point currentStr is not apart of the Core language thus it is an ID
       if self.end != True:
         return Core.ID
         
-    if currentToken.isdigit() and int(currentToken) in range(1024):
+    #If the current token is a digit and it is not a leading 0 then if statement is true
+    if currentToken.isdigit() and int(currentToken) != 0:
+      #Look at the current index of self.tokens
       index = self.count + self.whiteSpaceCount
       currentConst =""
+      #Add the current digit to currentConst and look at the characters after it to determine if it is a part of the number
       while index<len(self.tokens) and self.tokens[index].isdigit():
         currentConst += self.tokens[index]
         index +=1
+      #Make sure the digit is in range
       if int(currentConst) not in range(1024):
         print("Error: "+ currentConst +" not in range 0-1023!")
         return Core.EOS
       return Core.CONST
+    else:
+      print("Error: Can't have leading 0!")
+      return Core.EOS
     
+    #If there is any text after the END statement
     if self.end and index != len(self.tokens)-1:
         print("ERROR: No text allowed after END keyword!")
+    #If there hasn't been an END statement yet and the program makes it to this line then
+    #The token is invalid and not apart of the language thus it throws an error
     elif not self.end:
       print("Error: Invalid token!")
 
@@ -171,23 +202,31 @@ class Scanner:
     
  
   def getID(self):
+    #Index is the current index of self.tokens to look at
     index = self.count + self.whiteSpaceCount
+    #CurrentStr is the ID that will be returned
     currentStr = ""
+    #While index is in bounds and the current token is an alphabetic character or a digit in the range 1-9
     while index<len(self.tokens) and (self.tokens[index].isalpha() or self.tokens[index] in range(1,10)):
+      #Add the current token to currentStr
       currentStr += self.tokens[index]
       index += 1
     return currentStr
       
 
   def getCONST(self):
-      index = self.count + self.whiteSpaceCount
-      currentConst =""
-      while index<len(self.tokens) and self.tokens[index].isdigit():
-        currentConst += self.tokens[index]
-        index +=1
-      
-      return currentConst
+    #Index is the current index of self.tokens to look at
+    index = self.count + self.whiteSpaceCount
+    #currentConst is the CONST that will ber eturned
+    currentConst =""
+    #While index is in range and the current token is a digit, add the digit to currentConst and return it
+    while index<len(self.tokens) and self.tokens[index].isdigit():
+      currentConst += self.tokens[index]
+      index +=1
+    
+    return currentConst
 
+  #Check if needed
   def checkIfValidToken(self,currentStr):
     try:
       token = Core[currentStr.upper()]
